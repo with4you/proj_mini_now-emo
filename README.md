@@ -1,11 +1,33 @@
-# proj_mini_now-emo
-Spring Boot backend + Vue 3 frontend emotion logging project
+<div align="center">
 
 # emotion-snapshot
 
-Java 17, Spring Boot 3.x 미니 앱. 감정 로그 CRUD와 일/주/월/연 통계 API, Chart.js 기반 단일 페이지 UI 제공.
+감정 로그를 기록하고 통계를 시각화하는 미니 앱 (Spring Boot + Vue).
 
-## 실행 (백엔드)
+</div>
+
+---
+
+## ✨ 특징
+- CRUD: 감정 레벨(1..5) 생성/조회/수정/삭제
+- 통계: 오늘(시간별) / 이번주(요일별) / 이번달(일별) / 올해(월별)
+- UI: Vue 3 + Vite + Chart.js (다크 테마, 세련된 차트 스타일)
+- 데이터 시드: CSV(예: `level,created_at`)를 부팅 시 자동 로드
+
+## 🧱 스택
+- Backend: Java 17, Spring Boot 3.x, Spring Web, Spring Data JPA, H2, Validation, (Actuator: health)
+- Frontend: Vue 3, Vite, Chart.js
+
+## 📸 스크린샷
+
+> 실제 스크린샷을 `docs/screenshots/` 경로에 추가해 주세요. 아래는 자리표시자입니다.
+
+![Dashboard](docs/screenshots/dashboard.png)
+![History](docs/screenshots/history.png)
+
+## 🚀 실행 방법
+
+### Backend (Spring Boot)
 
 - (로컬 Maven 사용)
 
@@ -13,11 +35,35 @@ Java 17, Spring Boot 3.x 미니 앱. 감정 로그 CRUD와 일/주/월/연 통�
 mvn spring-boot:run
 ```
 
-- 브라우저:
-  - 앱: http://localhost:8080/
-  - H2 콘솔: http://localhost:8080/h2-console (JDBC URL: `jdbc:h2:mem:emotiondb`)
+웹:
+- 앱: http://localhost:8080/
+- H2 콘솔: http://localhost:8080/h2-console (JDBC URL: `jdbc:h2:mem:emotiondb`)
 
-## 주요 엔드포인트
+### Frontend (Vue + Vite)
+개발용(프록시로 `/api` → 8080):
+
+```bash
+cd frontend
+npm install
+npm run dev
+# http://localhost:5173
+```
+
+프로덕션 빌드(산출물은 Spring `static/`으로 출력):
+
+```bash
+cd frontend
+npm run build
+# http://localhost:8080/ 에서 Spring이 서빙
+```
+
+## 🗂️ 데이터 시드(CSV)
+- 경로: `src/main/resources/data/emotion_log_2024_2025_hourly.csv`
+- 포맷: `level,created_at`
+  - 예: `3,2025-10-15 00:22:15` 또는 `3,2025-10-15T00:22:15Z`
+- 애플리케이션 부팅 시 테이블 초기화 후 CSV를 자동 로드합니다.
+
+## 🔌 API 요약
 
 - POST `/api/emotions` {"level":1..5}
 - GET `/api/emotions?from&to` (ISO8601 Instant)
@@ -26,39 +72,27 @@ mvn spring-boot:run
 - GET `/api/stats?range=daily|weekly|monthly|yearly`
 - (옵션) GET `/actuator/health`
 
-## 시간대/DB
+통계 그룹 기준
+- daily: 오늘 00~23시(시간대)
+- weekly: 이번 주 월~일(요일)
+- monthly: 이번 달 1~말일(일)
+- yearly: 올해 1~12월(월)
+
+## 🌐 환경/설정
 
 - JDBC 타임존: Asia/Seoul (UTC 저장/조회 일관성)
 - H2 메모리 DB(dev용), 콘솔 활성화
 
-## Seed 데이터
-
-- `src/main/resources/data.sql`에서 3~5개 초기 데이터 삽입
-
-## 빠른 테스트
+## 🧪 빠른 테스트
 
 ```bash
 curl -X POST localhost:8080/api/emotions -H "Content-Type: application/json" -d '{"level":4}'
 curl "localhost:8080/api/stats?range=daily"
 ```
 
-## 프론트엔드 (Vue + Vite)
+## 📦 배포/버전
+- 빌드: `mvn -U clean package`
+- 프런트 빌드: `cd frontend && npm run build`
 
-- 개발 서버 실행(프록시로 `/api`는 8080으로 전달):
-
-```bash
-cd frontend
-npm install
-npm run dev
-```
-
-- 프로덕션 빌드(산출물은 Spring `static/`으로 출력):
-
-```bash
-cd frontend
-npm run build
-```
-
-- 페이지
-  - 대시보드: `/` (Chart.js 4개 그래프, 저장 기능)
-  - 히스토리: `/history` (조회/수정/삭제)
+## 📜 라이선스
+본 레포지토리는 사내/개인 프로젝트 템플릿 용도로 사용할 수 있습니다.
