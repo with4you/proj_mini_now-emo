@@ -1,3 +1,6 @@
+# proj_mini_now-emo
+Spring Boot backend + Vue 3 frontend emotion logging project
+
 # emotion-snapshot
 
 Java 17, Spring Boot 3.x 미니 앱. 감정 로그 CRUD와 일/주/월/연 통계 API, Chart.js 기반 단일 페이지 UI 제공.
@@ -59,4 +62,3 @@ npm run build
 - 페이지
   - 대시보드: `/` (Chart.js 4개 그래프, 저장 기능)
   - 히스토리: `/history` (조회/수정/삭제)
-
