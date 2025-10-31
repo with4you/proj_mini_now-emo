@@ -3,6 +3,7 @@
 # emotion-snapshot
 
 감정 로그를 기록하고 통계를 시각화하는 미니 앱 (Spring Boot + Vue).
+
 ※ Cursor AI 와 함께 개발했습니다.
 
 </div>
