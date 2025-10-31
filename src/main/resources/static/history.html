@@ -1,0 +1,203 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Emotion Snapshot - History</title>
+  <style>
+    :root {
+      --bg: #0b1020;
+      --panel: #12182b;
+      --muted: #aab2c8;
+      --text: #e6ecff;
+      --brand: #7c9aff;
+      --danger: #ff6b6b;
+      --success: #44d6a8;
+      --border: #2a3557;
+    }
+    html, body { background: var(--bg); color: var(--text); font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; margin: 0; }
+    .container { max-width: 1080px; margin: 24px auto; padding: 0 16px; }
+    .nav { display:flex; align-items:center; justify-content:space-between; margin-bottom: 16px; }
+    .nav a { color: var(--muted); text-decoration:none; margin-right: 12px; }
+    .nav a.active, .nav a:hover { color: var(--text); }
+    .card { background: linear-gradient(180deg, #12182b 0%, #10162a 100%); border: 1px solid var(--border); border-radius: 14px; padding: 16px; box-shadow: 0 10px 24px rgba(0,0,0,0.25); }
+    .controls { display:grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap:12px; }
+    .controls label { display:flex; flex-direction:column; font-size:12px; color: var(--muted); }
+    .controls input[type="datetime-local"] { background:#0f1426; color: var(--text); border:1px solid var(--border); border-radius:10px; padding:8px 10px; }
+    .button { background: var(--brand); color:#0b1020; border:none; border-radius:10px; padding:10px 14px; font-weight:600; cursor:pointer; }
+    .button:hover { filter: brightness(1.05); }
+    .button.secondary { background: transparent; color: var(--text); border:1px solid var(--border); }
+    .button.danger { background: var(--danger); color: #fff; }
+    table { width:100%; border-collapse: collapse; margin-top: 14px; }
+    th, td { padding: 12px 10px; border-bottom:1px solid var(--border); font-size:14px; }
+    th { text-align:left; color: var(--muted); font-weight:600; }
+    tr:hover td { background:#0f152a; }
+    .level { font-weight:700; }
+    .tag { background:#0f1426; color: var(--muted); border:1px solid var(--border); border-radius:8px; padding:2px 8px; font-size:12px; }
+    .row-actions { display:flex; gap:8px; }
+    .header { display:flex; align-items:center; justify-content:space-between; margin: 8px 0 16px; }
+    .title { font-size:20px; font-weight:800; letter-spacing:0.2px; }
+
+    dialog { border:none; border-radius:12px; padding:0; background: transparent; }
+    .modal { background: #0f1426; border:1px solid var(--border); border-radius:12px; width: min(420px, 92vw); }
+    .modal header, .modal footer { padding:14px 16px; }
+    .modal main { padding: 0 16px 16px; }
+    .modal header { border-bottom:1px solid var(--border); font-weight:700; }
+    .modal footer { border-top:1px solid var(--border); display:flex; justify-content:flex-end; gap:10px; }
+    .input { width:100%; background:#0b1020; border:1px solid var(--border); border-radius:10px; color:var(--text); padding:10px 12px; }
+  </style>
+  <script>
+    const tz = 'Asia/Seoul';
+    function fmt(ts) {
+      const d = new Date(ts);
+      return new Intl.DateTimeFormat('ko-KR', { timeZone: tz, year:'numeric', month:'2-digit', day:'2-digit', hour:'2-digit', minute:'2-digit', second:'2-digit'}).format(d);
+    }
+    function toInstantLocal(dtValue) {
+      if (!dtValue) return null;
+      // datetime-local -> local time; convert to Instant (UTC) string
+      const d = new Date(dtValue);
+      return d.toISOString();
+    }
+
+    let state = { rows: [], editing: null };
+
+    async function load() {
+      const from = document.getElementById('from').value;
+      const to = document.getElementById('to').value;
+      const params = new URLSearchParams();
+      if (from) params.set('from', toInstantLocal(from));
+      if (to) params.set('to', toInstantLocal(to));
+      const res = await fetch(`/api/emotions?${params.toString()}`);
+      if (!res.ok) { alert('조회 실패'); return; }
+      state.rows = await res.json();
+      renderTable();
+    }
+
+    function renderTable() {
+      const tbody = document.querySelector('tbody');
+      tbody.innerHTML = '';
+      state.rows.forEach(row => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td><span class="tag">#${row.id}</span></td>
+          <td class="level">${row.level}</td>
+          <td>${fmt(row.createdAt)}</td>
+          <td>
+            <div class="row-actions">
+              <button class="button secondary" onclick="openEdit(${row.id}, ${row.level})">수정</button>
+              <button class="button danger" onclick="removeRow(${row.id})">삭제</button>
+            </div>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    function openEdit(id, level) {
+      state.editing = { id, level };
+      document.getElementById('editLevel').value = String(level);
+      document.getElementById('editDialog').showModal();
+    }
+
+    function closeEdit() {
+      state.editing = null;
+      document.getElementById('editDialog').close();
+    }
+
+    async function saveEdit() {
+      if (!state.editing) return;
+      const level = parseInt(document.getElementById('editLevel').value || '0');
+      if (level < 1 || level > 5) { alert('레벨은 1~5'); return; }
+      const res = await fetch(`/api/emotions/${state.editing.id}`, {
+        method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ level })
+      });
+      if (!res.ok) { const e = await res.json().catch(()=>({})); alert(e.message||'수정 실패'); return; }
+      closeEdit();
+      await load();
+    }
+
+    async function removeRow(id) {
+      if (!confirm(`#${id} 항목을 삭제할까요?`)) return;
+      const res = await fetch(`/api/emotions/${id}`, { method: 'DELETE' });
+      if (!res.ok) { const e = await res.json().catch(()=>({})); alert(e.message||'삭제 실패'); return; }
+      await load();
+    }
+
+    function defaultRange() {
+      // 기본: 최근 30일
+      const to = new Date();
+      const from = new Date(to.getTime() - 29*24*3600*1000);
+      const toStr = new Date(to.getTime() - to.getTimezoneOffset()*60000).toISOString().slice(0,16);
+      const fromStr = new Date(from.getTime() - from.getTimezoneOffset()*60000).toISOString().slice(0,16);
+      document.getElementById('from').value = fromStr;
+      document.getElementById('to').value = toStr;
+    }
+
+    window.addEventListener('DOMContentLoaded', () => {
+      defaultRange();
+      load();
+    });
+  </script>
+</head>
+<body>
+  <div class="container">
+    <div class="nav">
+      <div>
+        <a href="/" >대시보드</a>
+        <a href="/history.html" class="active">히스토리</a>
+      </div>
+      <div style="color:var(--muted)">Emotion Snapshot</div>
+    </div>
+
+    <div class="card">
+      <div class="header">
+        <div class="title">과거 기록</div>
+        <div>
+          <button class="button secondary" onclick="load()">새로고침</button>
+        </div>
+      </div>
+      <div class="controls" style="margin-bottom:10px;">
+        <label>FROM
+          <input type="datetime-local" id="from" />
+        </label>
+        <label>TO
+          <input type="datetime-local" id="to" />
+        </label>
+        <div></div>
+        <div></div>
+        <div style="display:flex; align-items:end; justify-content:end;">
+          <button class="button" onclick="load()">검색</button>
+        </div>
+      </div>
+
+      <table>
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Level</th>
+            <th>Created At</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </div>
+
+  <dialog id="editDialog">
+    <div class="modal">
+      <header>레벨 수정</header>
+      <main>
+        <label style="display:block; font-size:12px; color:var(--muted); margin:10px 0 6px;">Level (1~5)</label>
+        <input id="editLevel" class="input" type="number" min="1" max="5" />
+      </main>
+      <footer>
+        <button class="button secondary" onclick="closeEdit()">취소</button>
+        <button class="button" onclick="saveEdit()">저장</button>
+      </footer>
+    </div>
+  </dialog>
+</body>
+</html>
+
+
