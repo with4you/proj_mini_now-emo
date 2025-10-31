@@ -20,10 +20,9 @@
 
 ## 📸 스크린샷
 
-> 실제 스크린샷을 `docs/screenshots/` 경로에 추가해 주세요. 아래는 자리표시자입니다.
-
-![Dashboard](docs/screenshots/dashboard.png)
-![History](docs/screenshots/history.png)
+<img width="587" height="961" alt="dashboard" src="https://github.com/user-attachments/assets/d9d356a2-7839-4ed3-a8a1-24778974b2aa" />
+<img width="593" height="954" alt="dashboard2" src="https://github.com/user-attachments/assets/f77544b5-c937-4953-a7c4-9d3e0d5a650e" />
+<img width="593" height="960" alt="history" src="https://github.com/user-attachments/assets/ddada56f-e8c3-4760-bd5e-56f5ea2b06eb" />
 
 ## 🚀 실행 방법
 
